@@ -1,2 +1,1 @@
-# MorSchedule
-iCalendar Generator for CQUPT
+# MorScheduleiCalendar Generator for CQUPT  生成iCalendar格式课表日历## 依赖	Python <= 2.7	iCalendar(pypi) <=3.9	requests(pypi)## 代理配置'''pythonproxies = {'http': 'http://127.0.0.1:8081'}'''##Author: MorHop

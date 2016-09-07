@@ -6,15 +6,15 @@ __version__ = '2016090600'
 ##
 ##
 
-import tempfile, os
+import os
 import sys
-import pytz
 import requests
 import re
-import time
-import uuid
 from icalendar import *
 from datetime import datetime,timedelta
+
+#配置
+proxies = {}
 
 # 开学时间(在第一周中的某个日期即可)
 # 每学期重设
