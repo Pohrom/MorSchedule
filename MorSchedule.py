@@ -2,12 +2,10 @@
 ##  MorSchedule
 ##
 __author__ = 'MorHop'
-__version__ = '2016090600'
+__version__ = '2016090609'
 ##
 ##
 
-import os
-import sys
 import requests
 import re
 from icalendar import *
@@ -68,8 +66,10 @@ def GetCourseInfo(item):
 def CourseVerify(course):
 	if course["name"] == "" and course["location"] == u"运动场":
 		course["name"] = u"体育"
-	if course["id"].find("SK") != -1:
-		course["name"] = u"实验 - " + course["name"]
+	elif course["id"].find("SK") != -1:
+		course["name"] = u"实验 - " + course["name"] + " - " + course["teacher"]
+	else:
+		course["name"] = course["name"] + " - " + course["teacher"]
 	return course
 
 # 单时间段多课程
@@ -83,7 +83,7 @@ def GetCourseSplit(period):
 			courses.append(GetCourseInfo(item))
 	return courses
 
-def generateEvent(periodIndex,dayIndex,weeklist,course):
+def generateEvent(cal,periodIndex,dayIndex,weeklist,course):
 	periodStart = CoursePeriod[periodIndex][0]
 	periodEnd = CoursePeriod[periodIndex][1]
 
@@ -92,10 +92,6 @@ def generateEvent(periodIndex,dayIndex,weeklist,course):
 		event.add('summary', course["name"])
 		event.add('dtstart', SchoolOpen + timedelta(weeks=weekIndex-1,days=dayIndex - 1)  + periodStart)
 		event.add('dtend', SchoolOpen + timedelta(weeks=weekIndex-1,days=dayIndex - 1) + periodEnd)
-		organizer = vCalAddress('MAILTO:teacher@cqupt.edu.cn')
-		organizer.params['cn'] = vText(course["teacher"])
-		organizer.params['role'] = vText('教师')
-		event['organizer'] = organizer
 		event['location'] = vText(course["location"])
 		cal.add_component(event)
 
@@ -127,32 +123,37 @@ def appendWeek(periods):
 			weeklist.append(int(period[:-1]))
 	return weeklist
 
-def oneCourseAddMultiEvent(periodIndex,dayIndex,courses):
+def oneCourseAddMultiEvent(cal,periodIndex,dayIndex,courses):
 	for course in courses:
 		if course != None:
 			weeklist = appendWeek(course["periods"])
-			generateEvent(int(periodIndex),int(dayIndex),weeklist,course)
+			generateEvent(cal,int(periodIndex),int(dayIndex),weeklist,course)
 
 
-cal = Calendar()
-cal.add('prodid', '-//My calendar product//mxm.dk//')
-cal.add('version', '2.0')
+def getICS(id):
+	cal = Calendar()
+	cal.add('prodid', '-//My calendar product//mxm.dk//')
+	cal.add('version', '2.0')
 
-#所有表格项目
-itemsFlat = GetKebiao(GetKebiaoHTML(raw_input("code:")))
-#二维数组化
-items = zip(*[iter(itemsFlat)]*8)
-#删除休息间隔
-del items[6]
-del items[3]
-del items[0]
+	#所有表格项目
+	itemsFlat = GetKebiao(GetKebiaoHTML(id))
+	#二维数组化
+	items = zip(*[iter(itemsFlat)]*8)
+	#删除休息间隔
+	del items[6]
+	del items[3]
+	del items[0]
 
-#dayIndex = 0 时是节数栏
-for periodIndex in range(0,6):
-	for dayIndex in range(0,8):
-		if dayIndex !=0:
-			oneCourseAddMultiEvent(periodIndex,dayIndex,GetCourseSplit(items[periodIndex][dayIndex]))
+	#dayIndex = 0 时是节数栏
+	for periodIndex in range(0,6):
+		for dayIndex in range(0,8):
+			if dayIndex !=0:
+				oneCourseAddMultiEvent(cal,periodIndex,dayIndex,GetCourseSplit(items[periodIndex][dayIndex]))
+	return cal.to_ical()
 
-f = open('MorSchedule.ics', 'wb')
-f.write(cal.to_ical())
-f.close()
+if __name__ == "__main__":
+	id = raw_input("code:")
+	f = open('MorSchedule.ics', 'wb')
+	f.write(getICS(id))
+	f.close()
+	print('saved to MorSchedule.ics')
