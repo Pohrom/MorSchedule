@@ -127,6 +127,7 @@ def parseTime(periods):
 						weeklist.append(i)
 			else:
 				print(u"发现特殊时间类型,未做处理 : " + period)
+				raise Exception(u"发现特殊时间类型,未做处理 : " + period)
 
 		elif period.find("-") != -1:
 			#一般时间段 2-16周
@@ -141,36 +142,46 @@ def parseTime(periods):
 
 
 def getICS(id):
+	# 日历名称放于后部,以便添加异常警告
+	# iOS添加时的日历描述遵循fallback : name->desc
 	cal = Calendar()
 	cal.add('prodid', '-//My calendar product//mxm.dk//')
 	cal.add('version', '2.0')
-	cal.add('name','MorSchedule')
-	cal.add('X-WR-CALNAME','MorSchedule - ' + str(id)) # iOS used
-	cal.add('description',str(id) + u"的课表")
-	cal.add('X-WR-CALDESC',str(id) + u"的课表")
 	cal.add('timezone-id','Asia/Chongqing')
 	cal.add('X-WR-TIMEZONE','Asia/Chongqing')
 
-	#所有表格项目
-	items = getKebiaoHTMLItems(getKebiaoHTML(id))
-	#二维数组化单元格
-	units = zip(*[iter(items)]*8)
-	#删除休息间隔
-	del units[6]
-	del units[3]
-	del units[0]
+	try:  
 
-	#dayIndex = 0 时是节数栏
-	for periodIndex in range(0,6):
-		for dayIndex in range(1,8):
-			for courseHTML in muiltCourseUnitSplit(units[periodIndex][dayIndex]):
-				course = getCourseFromHTML(courseHTML)	# HTML课程转对象
-				if course != None:
-					course = courseVerify(course)	# 课程对象信息校正
-					weeklist = parseTime(course["periods"])
-					generateEvent(cal,periodIndex,dayIndex,weeklist,course)
+		#所有表格项目
+		items = getKebiaoHTMLItems(getKebiaoHTML(id))
+		#二维数组化单元格
+		units = zip(*[iter(items)]*8)
+		#删除休息间隔
+		del units[6]
+		del units[3]
+		del units[0]
 
-	return cal.to_ical()
+		#dayIndex = 0 时是节数栏
+		for periodIndex in range(0,6):
+			for dayIndex in range(1,8):
+				for courseHTML in muiltCourseUnitSplit(units[periodIndex][dayIndex]):
+					course = getCourseFromHTML(courseHTML)	# HTML课程转对象
+					if course != None:
+						course = courseVerify(course)	# 课程对象信息校正
+						weeklist = parseTime(course["periods"])
+						generateEvent(cal,periodIndex,dayIndex,weeklist,course)
+	except Exception,e:
+		cal.add('name','异常 - MorSchedule - ' + str(id))
+		cal.add('X-WR-CALNAME','异常 - MorSchedule - ' + str(id))
+		cal.add('description',u"异常 - " + str(id) + u"的课表") 
+		cal.add('X-WR-CALDESC',u"异常 - " + str(id) + u"的课表")
+	else:
+		cal.add('name','MorSchedule - ' + str(id))
+		cal.add('X-WR-CALNAME','MorSchedule - ' + str(id)) # iOS used
+		cal.add('description',str(id) + u"的课表") 
+		cal.add('X-WR-CALDESC',str(id) + u"的课表")
+	finally:
+		return cal.to_ical()
 
 if __name__ == "__main__":
 	id = raw_input("code:")
