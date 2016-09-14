@@ -33,21 +33,23 @@ r = re.compile("<td.*?>.*?</td>", re.S)
 rInfo = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
 rHtml = re.compile(r'<[^>]+>',re.S)
 
-def GetKebiaoHTML(id):
+def getKebiaoHTML(id):
         #代理服务器设置
         proxies = {}
         # proxies = {'http': 'http://127.0.0.1:8081'}
 	# 内网
-	# resp = requests.get("http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=1)
+	resp = requests.get("http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=1)
 	# 外网
-	resp = requests.get("http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=5)
+	# resp = requests.get("http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=5)
         return resp.text.replace(chr(0x0d),"").replace(chr(0x0a),"")
 
-def GetKebiao(html):
+# HTML表格拆解
+def getKebiaoHTMLItems(html):
 	Kebiaolist = r.findall(html)
 	return Kebiaolist
 
-def GetCourseInfo(item):
+# 单一课程信息提取
+def getCourseFromHTML(item):
 	if len(item) == len("<td ></td>"):
 		return None
 	course = dict()
@@ -61,28 +63,42 @@ def GetCourseInfo(item):
 			'periods':rHtml.sub('',infos[3]).strip(" "),
 			'teacher':teacherName
 		}
-	return CourseVerify(course) 
-
-def CourseVerify(course):
-	if course["name"] == "" and course["location"] == u"运动场":
-		course["name"] = u"体育"
-	elif course["id"].find("SK") != -1:
-		course["name"] = u"实验 - " + course["name"] + " - " + course["teacher"]
-	else:
-		course["name"] = course["name"] + " - " + course["teacher"]
 	return course
 
-# 单时间段多课程
-def GetCourseSplit(period):
-	courses = list()
-	if (period.find("<hr>") == -1):
-		courses.append(GetCourseInfo(period))
-	else:
-		items = period.split("<hr>")
-		for item in items:
-			courses.append(GetCourseInfo(item))
-	return courses
+# 单一课程信息验证与校正
+def courseVerify(course):
+	prefix = str()
+	postfix = str()
 
+	# 体育课标注
+	if course["name"] == "" and course["location"] == u"运动场":
+		course["name"] = u"体育"
+
+	# 实验课标注
+	if course["id"].find("SK") != -1:
+		prefix += u"实验 - "
+
+	if course["periods"].find(u"3节连上") != -1:
+		course["periods"] = course["periods"].replace(u"3节连上","")
+		postfix = u" - 3节连上"
+
+	# 教师信息补全
+	if course["teacher"] != "":
+		postfix += u" - " + course["teacher"]
+
+
+	course["name"] = prefix + course["name"] + postfix
+	return course
+
+# 多课程单元分割
+def muiltCourseUnitSplit(unit):
+	if (unit.find("<hr>") == -1):
+		coursesHTML = [unit]
+	else:
+		coursesHTML = unit.split("<hr>")
+	return coursesHTML
+
+# 生成日历事件
 def generateEvent(cal,periodIndex,dayIndex,weeklist,course):
 	periodStart = CoursePeriod[periodIndex][0]
 	periodEnd = CoursePeriod[periodIndex][1]
@@ -95,7 +111,7 @@ def generateEvent(cal,periodIndex,dayIndex,weeklist,course):
 		event['location'] = vText(course["location"])
 		cal.add_component(event)
 
-def appendWeek(periods):
+def parseTime(periods):
 	weeklist = list()
 	for period in periods.split(","):
 		if period.find(u"单周") != -1 or period.find(u"双周") != -1:
@@ -110,7 +126,7 @@ def appendWeek(periods):
 					if i%2 == 0:
 						weeklist.append(i)
 			else:
-				print("发现异常时间类型" + period)
+				print(u"发现特殊时间类型,未做处理 : " + period)
 
 		elif period.find("-") != -1:
 			#一般时间段 2-16周
@@ -123,32 +139,37 @@ def appendWeek(periods):
 			weeklist.append(int(period[:-1]))
 	return weeklist
 
-def oneCourseAddMultiEvent(cal,periodIndex,dayIndex,courses):
-	for course in courses:
-		if course != None:
-			weeklist = appendWeek(course["periods"])
-			generateEvent(cal,int(periodIndex),int(dayIndex),weeklist,course)
-
 
 def getICS(id):
 	cal = Calendar()
 	cal.add('prodid', '-//My calendar product//mxm.dk//')
 	cal.add('version', '2.0')
+	cal.add('name','MorSchedule')
+	cal.add('X-WR-CALNAME','MorSchedule - ' + str(id)) # iOS used
+	cal.add('description',str(id) + u"的课表")
+	cal.add('X-WR-CALDESC',str(id) + u"的课表")
+	cal.add('timezone-id','Asia/Chongqing')
+	cal.add('X-WR-TIMEZONE','Asia/Chongqing')
 
 	#所有表格项目
-	itemsFlat = GetKebiao(GetKebiaoHTML(id))
-	#二维数组化
-	items = zip(*[iter(itemsFlat)]*8)
+	items = getKebiaoHTMLItems(getKebiaoHTML(id))
+	#二维数组化单元格
+	units = zip(*[iter(items)]*8)
 	#删除休息间隔
-	del items[6]
-	del items[3]
-	del items[0]
+	del units[6]
+	del units[3]
+	del units[0]
 
 	#dayIndex = 0 时是节数栏
 	for periodIndex in range(0,6):
-		for dayIndex in range(0,8):
-			if dayIndex !=0:
-				oneCourseAddMultiEvent(cal,periodIndex,dayIndex,GetCourseSplit(items[periodIndex][dayIndex]))
+		for dayIndex in range(1,8):
+			for courseHTML in muiltCourseUnitSplit(units[periodIndex][dayIndex]):
+				course = getCourseFromHTML(courseHTML)	# HTML课程转对象
+				if course != None:
+					course = courseVerify(course)	# 课程对象信息校正
+					weeklist = parseTime(course["periods"])
+					generateEvent(cal,periodIndex,dayIndex,weeklist,course)
+
 	return cal.to_ical()
 
 if __name__ == "__main__":
