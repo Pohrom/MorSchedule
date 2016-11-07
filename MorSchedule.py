@@ -31,17 +31,25 @@ CoursePeriod = [
 
 r = re.compile("<td.*?>.*?</td>", re.S)
 rInfo = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
-rHtml = re.compile(r'<[^>]+>',re.S)
+rHtml = re.compile("<[^>]+>",re.S)
+rDigit = re.compile("(\w*[0-9]+)\w*",re.S)
+
+def reserveDigit(s):
+	return rDigit.findall(s)
+
+def reserveFirstNumber(s):
+	return int(reserveDigit(s)[0])
+
 
 def getKebiaoHTML(id):
-        #代理服务器设置
-        proxies = {}
-        # proxies = {'http': 'http://127.0.0.1:8081'}
+	#代理服务器设置
+	proxies = {}
+	# proxies = {'http': 'http://127.0.0.1:8081'}
 	# 内网
-	resp = requests.get("http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=1)
+	#resp = requests.get("http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=1)
 	# 外网
-	# resp = requests.get("http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=5)
-        return resp.text.replace(chr(0x0d),"").replace(chr(0x0a),"")
+	resp = requests.get("http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php?type=student&id=" + str(id),timeout=5)
+	return resp.text.replace(chr(0x0d),"").replace(chr(0x0a),"")
 
 # HTML表格拆解
 def getKebiaoHTMLItems(html):
@@ -118,11 +126,11 @@ def parseTime(periods):
 			#单双周时间 2-16周单周
 			pair = period[:-3].split("-")
 			if period.find(u"单周") != -1:
-				for i in range(int(pair[0]),int(pair[1])+1):
+				for i in range(reserveFirstNumber(pair[0]),reserveFirstNumber(pair[1])+1):
 					if i%2 == 1:
 						weeklist.append(i)
 			elif period.find(u"双周") != -1:
-				for i in range(int(pair[0]),int(pair[1])+1):
+				for i in range(reserveFirstNumber(pair[0]),reserveFirstNumber(pair[1])+1):
 					if i%2 == 0:
 						weeklist.append(i)
 			else:
@@ -132,7 +140,7 @@ def parseTime(periods):
 		elif period.find("-") != -1:
 			#一般时间段 2-16周
 			pair = period[:-1].split("-")
-			for i in range(int(pair[0]),int(pair[1])+1):
+			for i in range(reserveFirstNumber(pair[0]),reserveFirstNumber(pair[1])+1):
 				weeklist.append(i)
 
 		else:
