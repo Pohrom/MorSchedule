@@ -145,7 +145,7 @@ def parseTime(periods):
 
 		else:
 			#单一时间点 2周
-			weeklist.append(int(period[:-1]))
+			weeklist.append(reserveFirstNumber(period))
 	return weeklist
 
 
