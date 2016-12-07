@@ -16,30 +16,29 @@ proxies = {}
 
 # 开学时间(在第一周中的某个日期即可)
 # 每学期重设
-SchoolOpen = datetime(2016,9,5)
+SchoolOpen = datetime(2016, 9, 5)
 SchoolOpen = SchoolOpen - timedelta(days=SchoolOpen.weekday())
 
 # 课程时间
 CoursePeriod = [
-	[timedelta(hours=8, minutes=0 ),timedelta(hours=9, minutes=40)],
-	[timedelta(hours=10,minutes=5 ),timedelta(hours=11,minutes=45)],
-	[timedelta(hours=14,minutes=0 ),timedelta(hours=15,minutes=40)],
-	[timedelta(hours=16,minutes=5 ),timedelta(hours=17,minutes=45)],
-	[timedelta(hours=19,minutes=0 ),timedelta(hours=20,minutes=40)],
-	[timedelta(hours=20,minutes=50),timedelta(hours=22,minutes=30)],
+	   [timedelta(hours=8, minutes=0), timedelta(hours=9, minutes=40)],
+	   [timedelta(hours=10, minutes=5), timedelta(hours=11, minutes=45)],
+	   [timedelta(hours=14, minutes=0), timedelta(hours=15, minutes=40)],
+	   [timedelta(hours=16, minutes=5), timedelta(hours=17, minutes=45)],
+	   [timedelta(hours=19, minutes=0), timedelta(hours=20, minutes=40)],
+	   [timedelta(hours=20, minutes=50), timedelta(hours=22, minutes=30)],
 ]
 
 r = re.compile("<td.*?>.*?</td>", re.S)
 rInfo = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
-rHtml = re.compile("<[^>]+>",re.S)
-rDigit = re.compile("(\w*[0-9]+)\w*",re.S)
+rHtml = re.compile("<[^>]+>", re.S)
+rDigit = re.compile("(\w*[0-9]+)\w*", re.S)
 
 def reserveDigit(s):
-	return rDigit.findall(s)
+    return rDigit.findall(s)
 
 def reserveFirstNumber(s):
 	return int(reserveDigit(s)[0])
-
 
 def getKebiaoHTML(id):
 	#代理服务器设置
@@ -160,24 +159,23 @@ def getICS(id):
 
 	try:  
 
-		#所有表格项目
+		# 所有表格项目
 		items = getKebiaoHTMLItems(getKebiaoHTML(id))
-		#二维数组化单元格
+		# 二维数组化单元格
 		units = zip(*[iter(items)]*8)
-		#删除休息间隔
+		# 删除表头/休息间隔
 		del units[6]
 		del units[3]
 		del units[0]
 
-		#dayIndex = 0 时是节数栏
-		for periodIndex in range(0,6):
-			for dayIndex in range(1,8):
-				for courseHTML in muiltCourseUnitSplit(units[periodIndex][dayIndex]):
+		for classOfDay in range(0,6):
+			for dayOfWeek in range(1,8):
+				for courseHTML in muiltCourseUnitSplit(units[classOfDay][dayOfWeek]):
 					course = getCourseFromHTML(courseHTML)	# HTML课程转对象
 					if course != None:
 						course = courseVerify(course)	# 课程对象信息校正
 						weeklist = parseTime(course["periods"])
-						generateEvent(cal,periodIndex,dayIndex,weeklist,course)
+						generateEvent(cal,classOfDay,dayOfWeek,weeklist,course)
 	except Exception,e:
 		cal.add('name','异常 - MorSchedule - ' + str(id))
 		cal.add('X-WR-CALNAME','异常 - MorSchedule - ' + str(id))
