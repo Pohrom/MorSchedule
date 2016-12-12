@@ -2,7 +2,7 @@
 ##  MorSchedule
 ##
 __author__ = 'MorHop'
-__version__ = '2016090609'
+__version__ = '2016121216'
 ##
 ##
 import re
@@ -13,15 +13,15 @@ from icalendar import Calendar, Event, vText
 
 # SOURCE 配置
 KEBIAO_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php"
-KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php"
-KEBIAO_SOURCE_URL = KEBIAO_CQUPT_SOURCE_URL + "?type=student&id="
-
 WEEK_OF_TERM_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/ksap.php"
-WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/ksap.php"
-WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_CQUPT_SOURCE_URL
-
-EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showKsap.php"
 EXAM_ARRANGEMENT_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showKsap.php"
+
+EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showKsap.php"
+KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php"
+WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/ksap.php"
+
+KEBIAO_SOURCE_URL = KEBIAO_CQUPT_SOURCE_URL + "?type=student&id="
+WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_CQUPT_SOURCE_URL
 EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_CQUPT_SOURCE_URL + "?type=stu&id="
 
 # 开学时间(在第一周中的某个日期即可)
