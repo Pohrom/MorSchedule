@@ -18,12 +18,19 @@ app = web.application(urls, globals())
 class Hello:
     def GET(self):
         return """
-MorSchedule
-重邮 iCalendar 课表接口
-
-author : MorHop
-issues : github.com/Pohrom/MorSchedule/issues
-usage  : /ics?xh=
+<html>
+<head>
+<meta charset="utf-8" />
+</head>
+<body>
+MorSchedule<br>
+重邮 iCalendar 课表接口<br>
+<br>
+author : MorHop<br>
+issues : github.com/Pohrom/MorSchedule/issues<br>
+usage  : /ics?xh=<br>
+</body>
+</html>
 """
 class Ics:
     def GET(self):
