@@ -16,18 +16,13 @@ KEBIAO_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showkebiao.php"
 WEEK_OF_TERM_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/ksap.php"
 EXAM_ARRANGEMENT_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showKsap.php"
 
-EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showKsap.php"
-KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/showkebiao.php"
-WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.edu.cn.cqupt.congm.in/jwzxtmp/ksap.php"
+EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/showKsap.php"
+KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/kebiao/kb_stu.php"
+WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/ksap.php"
 
-KEBIAO_SOURCE_URL = KEBIAO_CQUPT_SOURCE_URL + "?type=student&id="
-WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_CQUPT_SOURCE_URL
-EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_CQUPT_SOURCE_URL + "?type=stu&id="
-
-# 开学时间(在第一周中的某个日期即可)
-# 每学期重设
-SchoolOpen = datetime(2016, 9, 5)
-SchoolOpen = SchoolOpen - timedelta(days=SchoolOpen.weekday())
+KEBIAO_SOURCE_URL = KEBIAO_INTERNET_SOURCE_URL + "?xh="
+WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_INTERNET_SOURCE_URL
+EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_INTERNET_SOURCE_URL + "?type=stu&id="
 
 # 课程时间
 COURSE_CLASS_OF_DAY = [
@@ -44,7 +39,26 @@ REGEX_EXAM_PERIOD = re.compile("(?P<hour>\\d+):(?P<minute>\\d+)", re.S)
 REGEX_INFO = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
 REGEX_HTML = re.compile("<[^>]+>", re.S)
 REGEX_ONLY_DIGIT = re.compile("(\\w*[0-9]+)\\w*", re.S)
-REGEX_CURRENT_DATE_OF_TERM = re.compile(u"(?P<beginYear>\d{4})-(?P<endYear>\d{4})学年(?P<term>\d)学期 第\s(?P<weekOfTerm>\d+?)\s周\s星期(?P<dayOfWeek>\s\w+)",re.S)
+REGEX_CURRENT_DATE_OF_TERM = re.compile(u"(?P<beginYear>\d{4})-(?P<endYear>\d{4})学年(?P<term>\d)学期 第 (?P<weekOfTerm>[-\d]+?) 周 星期 (?P<dayOfWeek>\d+)",re.S)
+
+def get_current_date_info_of_term():
+    '''
+    获取当前学期的时间信息
+    '''
+    resp = requests.get(WEEK_OF_TERM_SOURCE_URL)
+    result = REGEX_CURRENT_DATE_OF_TERM.search(resp.text)
+    tz = pytz.timezone("Asia/Chongqing")
+    serverDatetime = datetime.strptime(resp.headers['date'], '%a, %d %b %Y %H:%M:%S %Z').replace(tzinfo = tz)
+    # TODO: dayOfWeek 的可能性需要更多测试
+    return serverDatetime,int(result.group('beginYear')),int(result.group('endYear')),int(result.group('term')),int(result.group('weekOfTerm')),int(result.group('dayOfWeek')) or Null
+
+def get_beginning_of_term():
+    '''获取当前学期的开始日期'''
+    serverDatetime,beginYear,endYear,term,weekOfTerm,dayOfWeek = get_current_date_info_of_term()
+    beginning = serverDatetime - timedelta(weeks=weekOfTerm - 1 , days=dayOfWeek - 1)
+    return datetime.combine(beginning.date(),datetime(1970,1,1).time())
+
+SchoolOpen = get_beginning_of_term()
 
 def reserve_digit(string):
     '''
@@ -57,32 +71,6 @@ def reserve_first_number(string):
     仅保留字符串中的第一个数字，返回 int 类型
     '''
     return int(reserve_digit(string)[0])
-
-def get_current_date_info_of_term():
-    '''
-    获取当前学期的时间信息
-    '''
-    resp = requests.get("http://jwzx.cqupt.edu.cn/jwzxtmp/ksap.php")
-    result = REGEX_CURRENT_DATE_OF_TERM.search(resp.text)
-    tz = pytz.timezone("Asia/Chongqing")
-    dt_tz = datetime.strptime(resp.headers['date'], '%a, %d %b %Y %H:%M:%S %Z').replace(tzinfo = tz)
-    # TODO: dayOfWeek 的可能性需要更多测试
-    term_date_info = {
-        'server_datetime':dt_tz,
-        'begin_year':int(result.group('beginYear')),
-        'end_year':int(result.group('endYear')),
-        'term':int(result.group('term')),
-        'week_of_term':int(result.group('weekOfTerm')),
-        'day_of_week':int(result.group('dayOfWeek')),
-    } or {}
-    return term_date_info
-
-def get_beginning_of_term():
-    '''获取当前学期的开始日期'''
-    date_info = get_current_date_info_of_term()
-    beginning = date_info['server_datetime'] - \
-    timedelta(weeks=date_info['week_of_term'] - 1 , days=date_info['day_of_week'] - 1)
-    return beginning
 
 def get_kebiao_source(id_):
     '''
@@ -283,7 +271,7 @@ def get_ics(student_id):
     finally:
         return cal.to_ical()
 
-def get_ics_file():
+def save_ics_file():
     '''生成 iCal 格式日历文件'''
     student_id = raw_input("code:")
     ics_file = open('MorSchedule.ics', 'wb')
@@ -292,5 +280,4 @@ def get_ics_file():
     print 'saved to MorSchedule.ics'
 
 if __name__ == "__main__":
-    #print get_beginning_of_term()
-    get_ics_file()
+    save_ics_file()
