@@ -20,9 +20,13 @@ EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/showK
 KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/kebiao/kb_stu.php"
 WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/ksap.php"
 
-KEBIAO_SOURCE_URL = KEBIAO_INTERNET_SOURCE_URL + "?xh="
-WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_INTERNET_SOURCE_URL
-EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_INTERNET_SOURCE_URL + "?type=stu&id="
+EXAM_ARRANGEMENT_INTERNET_BAKUP_SOURCE_URL = "http://jwzx.host.congm.in:88/jwzxtmp/showKsap.php"
+KEBIAO_INTERNET_BAKUP_SOURCE_URL = "http://jwzx.host.congm.in:88/jwzxtmp/kebiao/kb_stu.php"
+WEEK_OF_TERM_INTERNET_BAKUP_SOURCE_URL = "http://jwzx.host.congm.in:88/jwzxtmp/ksap.php"
+
+KEBIAO_SOURCE_URL = KEBIAO_INTERNET_BAKUP_SOURCE_URL + "?xh="
+WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_INTERNET_BAKUP_SOURCE_URL
+EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_INTERNET_BAKUP_SOURCE_URL + "?type=stu&id="
 
 # 课程时间
 COURSE_CLASS_OF_DAY = [
