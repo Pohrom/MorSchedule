@@ -1,4 +1,4 @@
-﻿# -*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 ##  MorSchedule
 ##
 __author__ = 'MorHop'
@@ -6,6 +6,7 @@ __version__ = '2016121216'
 ##
 ##
 import re
+import traceback
 from datetime import datetime, timedelta
 import pytz
 import requests
@@ -93,7 +94,7 @@ def get_table_source(html):
 
 # 单一课程信息提取
 def get_course_info_from_source(item):
-    if len(item) == len("<td ></td>"):
+    if len(item) == len("<td ></td>") or len(item) == len("<td></td>"):
         return None
     course = dict()
     infos = item.split("<br>")
@@ -258,11 +259,12 @@ def get_ics(student_id):
                         weeklist = parse_time(course["periods"])
                         generate_course_event(cal, class_of_day, day_of_week, weeklist, course)
         generate_week_event(cal)
-    except Exception:
+    except Exception,e:
         cal.add('name', '异常 - MorSchedule - ' + str(student_id))
         cal.add('X-WR-CALNAME', '异常 - MorSchedule - ' + str(student_id))
         cal.add('description', u"异常 - " + str(student_id) + u"的课表")
         cal.add('X-WR-CALDESC', u"异常 - " + str(student_id) + u"的课表")
+        traceback.print_exc()
     else:
         cal.add('name', 'MorSchedule - ' + str(student_id))
         cal.add('X-WR-CALNAME', 'MorSchedule - ' + str(student_id)) # iOS used
