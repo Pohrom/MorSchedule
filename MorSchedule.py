@@ -49,17 +49,18 @@ def get_current_date_info_of_term():
     resp = requests.get(WEEK_OF_TERM_SOURCE_URL)
     result = REGEX_CURRENT_DATE_OF_TERM.search(resp.text)
     tz = pytz.timezone("Asia/Chongqing")
-    serverDatetime = datetime.strptime(resp.headers['date'], '%a, %d %b %Y %H:%M:%S %Z').replace(tzinfo = tz)
-    # TODO: dayOfWeek 的可能性需要更多测试
+    serverDatetime = tz.localize(datetime.strptime(resp.headers['date'], '%a, %d %b %Y %H:%M:%S %Z'))
     return serverDatetime,int(result.group('beginYear')),int(result.group('endYear')),int(result.group('term')),int(result.group('weekOfTerm')),int(result.group('dayOfWeek')) or Null
 
 def get_beginning_of_term():
     '''获取当前学期的开始日期'''
     serverDatetime,beginYear,endYear,term,weekOfTerm,dayOfWeek = get_current_date_info_of_term()
     beginning = serverDatetime - timedelta(weeks=weekOfTerm - 1 , days=dayOfWeek - 1)
+    beginning += timedelta(hours = 8) # `combine`过程中忽略了时区信息,因此在此处合并时区
     return datetime.combine(beginning.date(),datetime(1970,1,1).time())
 
 SchoolOpen = get_beginning_of_term()
+print SchoolOpen
 
 def reserve_digit(string):
     '''
