@@ -17,13 +17,13 @@ KEBIAO_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/kebiao/kb_stu.php"
 WEEK_OF_TERM_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/ksap.php"
 EXAM_ARRANGEMENT_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showKsap.php"
 
-EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/showKsap.php"
 KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/kebiao/kb_stu.php"
 WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/ksap.php"
+EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/showKsap.php"
 
-KEBIAO_SOURCE_URL = KEBIAO_CQUPT_SOURCE_URL + "?xh="
-WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_CQUPT_SOURCE_URL
-EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_CQUPT_SOURCE_URL + "?type=stu&id="
+KEBIAO_SOURCE_URL = KEBIAO_INTERNET_SOURCE_URL + "?xh="
+WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_INTERNET_SOURCE_URL
+EXAM_ARRANGEMENT_SOURCE_URL = EXAM_ARRANGEMENT_INTERNET_SOURCE_URL + "?type=stu&id="
 
 # 课程时间
 COURSE_CLASS_OF_DAY = [
@@ -40,7 +40,7 @@ REGEX_EXAM_PERIOD = re.compile("(?P<hour>\\d+):(?P<minute>\\d+)", re.S)
 REGEX_INFO = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
 REGEX_HTML = re.compile("<[^>]+>", re.S)
 REGEX_ONLY_DIGIT = re.compile("(\\w*[0-9]+)\\w*", re.S)
-REGEX_CURRENT_DATE_OF_TERM = re.compile(u"(?P<beginYear>\d{4})-(?P<endYear>\d{4})学年(?P<term>\d)学期 第 (?P<weekOfTerm>[-\d]+?) 周 星期 (?P<dayOfWeek>\d+)",re.S)
+REGEX_CURRENT_DATE_OF_TERM = re.compile(u"(?P<beginYear>\d{4})-(?P<endYear>\d{4})学年(?P<term>\d)学期 第 (?P<weekOfTerm>[-\d]+?) 周 星期 (?P<dayOfWeek>\d+)", re.S)
 
 def get_current_date_info_of_term():
     '''
@@ -60,7 +60,6 @@ def get_beginning_of_term():
     return datetime.combine(beginning.date(),datetime(1970,1,1).time())
 
 SchoolOpen = get_beginning_of_term()
-print SchoolOpen
 
 def reserve_digit(string):
     '''
@@ -182,7 +181,7 @@ def parse_time(periods):
                     if i%2 == 0:
                         weeklist.append(i)
             else:
-                print "发现特殊时间类型,未做处理 : " + period
+                print("发现特殊时间类型,未做处理 : " + period)
                 raise Exception("发现特殊时间类型,未做处理 : " + period)
 
         elif period.find("-") != -1:
@@ -230,8 +229,9 @@ def get_ics(student_id):
         course_table = get_table_source(get_kebiao_source(student_id))
         exam_table = get_table_source(get_exam_source(student_id))
         # 二维数组化单元格
-        course_units = zip(*[iter(course_table)]*8)
-        exam_units = zip(*[iter(exam_table)]*12)
+        course_units = list(zip(*[iter(course_table)]*8))
+        exam_units = list(zip(*[iter(exam_table)]*12))
+        print(course_units)
         # 删除表头/休息间隔
         del course_units[6]
         del course_units[3]
@@ -260,7 +260,7 @@ def get_ics(student_id):
                         weeklist = parse_time(course["periods"])
                         generate_course_event(cal, class_of_day, day_of_week, weeklist, course)
         generate_week_event(cal)
-    except Exception,e:
+    except (Exception,e):
         cal.add('name', '异常 - MorSchedule - ' + str(student_id))
         cal.add('X-WR-CALNAME', '异常 - MorSchedule - ' + str(student_id))
         cal.add('description', u"异常 - " + str(student_id) + u"的课表")
@@ -280,7 +280,7 @@ def save_ics_file():
     ics_file = open('MorSchedule.ics', 'wb')
     ics_file.write(get_ics(student_id))
     ics_file.close()
-    print 'saved to MorSchedule.ics'
+    print('saved to MorSchedule.ics')
 
 if __name__ == "__main__":
     save_ics_file()
