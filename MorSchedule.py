@@ -41,6 +41,7 @@ REGEX_INFO = re.compile("(?=<br>).+?(?=<br>)|(<br>.+?(?=</span>))", re.S)
 REGEX_HTML = re.compile("<[^>]+>", re.S)
 REGEX_ONLY_DIGIT = re.compile("(\\w*[0-9]+)\\w*", re.S)
 REGEX_CURRENT_DATE_OF_TERM = re.compile(u"(?P<beginYear>\d{4})-(?P<endYear>\d{4})学年(?P<term>\d)学期 第 (?P<weekOfTerm>[-\d]+?) 周 星期 (?P<dayOfWeek>\d+)", re.S)
+REGEX_COURSE_SPLIT = re.compile(r"(?<=<div)(?P<attr>.+?>)(?P<body>.+?)(?=</div>)")
 
 def get_current_date_info_of_term():
     '''
@@ -126,20 +127,24 @@ def verify_course_info(course):
         course["periods"] = course["periods"].replace(u"3节连上", "")
         postfix = u" - 3节连上"
 
+    if course["periods"].find(u"4节连上") != -1:
+        course["periods"] = course["periods"].replace(u"4节连上", "")
+        postfix = u" - 4节连上"
+
     # 教师信息补全
     if course["teacher"] != "":
         postfix += u" - " + course["teacher"]
-
 
     course["name"] = prefix + course["name"] + postfix
     return course
 
 def split_course_sources(unit):
     '''分割含有多节课的单元'''
-    if unit.find("<hr>") == -1:
+    m = REGEX_COURSE_SPLIT.findall(unit)
+    if m == None:
         course_sources = [unit]
     else:
-        course_sources = unit.split("<hr>")
+        course_sources = [body for (attr, body) in m]
     return course_sources
 
 def generate_week_event(cal):
@@ -231,7 +236,6 @@ def get_ics(student_id):
         # 二维数组化单元格
         course_units = list(zip(*[iter(course_table)]*8))
         exam_units = list(zip(*[iter(exam_table)]*12))
-        print(course_units)
         # 删除表头/休息间隔
         del course_units[6]
         del course_units[3]
@@ -276,7 +280,7 @@ def get_ics(student_id):
 
 def save_ics_file():
     '''生成 iCal 格式日历文件'''
-    student_id = raw_input("code:")
+    student_id = input("code:")
     ics_file = open('MorSchedule.ics', 'wb')
     ics_file.write(get_ics(student_id))
     ics_file.close()
