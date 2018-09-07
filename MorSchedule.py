@@ -17,9 +17,9 @@ KEBIAO_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/kebiao/kb_stu.php"
 WEEK_OF_TERM_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/ksap.php"
 EXAM_ARRANGEMENT_CQUPT_SOURCE_URL = "http://jwzx.cqupt.edu.cn/jwzxtmp/showKsap.php"
 
-KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/kebiao/kb_stu.php"
-WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/ksap.php"
-EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqupt.congm.in/jwzxtmp/showKsap.php"
+KEBIAO_INTERNET_SOURCE_URL = "http://jwzx.cqu.pt/kebiao/kb_stu.php"
+WEEK_OF_TERM_INTERNET_SOURCE_URL = "http://jwzx.cqu.pt/ksap/index.php"
+EXAM_ARRANGEMENT_INTERNET_SOURCE_URL = "http://jwzx.cqu.pt/ksap/showKsap.php"
 
 KEBIAO_SOURCE_URL = KEBIAO_INTERNET_SOURCE_URL + "?xh="
 WEEK_OF_TERM_SOURCE_URL = WEEK_OF_TERM_INTERNET_SOURCE_URL
